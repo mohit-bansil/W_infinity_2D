@@ -5,9 +5,10 @@
 
 using namespace std;
 
-const int N = 3;
-double y[N][2] = { { 0,0 },{ 1,1 },{ 2,2 } };
-double lambda[N];
+const int maxN = 10;
+int N = 3;
+double y[maxN][2] = { { 0,0 },{ 1,1 },{ 2,2 } };
+double lambda[maxN];
 
 ofstream OutputFile("Cell_Data.txt");
 
@@ -19,19 +20,19 @@ Currently methods are
 3. Find mu area (area of rectangle intersected with mu)
 4. Determine if a point is inside the rectangle
 5. Print the coordinates of the rectangle to OutputFile
-6. Intersect two rectangles
+6. intersect two rectangles
 
 Also note that the definition of mu is inside of the mu_area function
 */
 struct rectangle;
-rectangle Intersect(rectangle A, rectangle B);
+rectangle intersect(rectangle A, rectangle B);
 struct rectangle
 {
 	//data
 	double x0, x1, y0, y1;
 
 	//methods
-	bool isNondegenerate()
+	bool is_nondegenerate()
 	{
 		if (x1 < x0 || y1 < y0)
 			return false;
@@ -40,14 +41,14 @@ struct rectangle
 	}
 	double area()
 	{
-		if (isNondegenerate())
+		if (is_nondegenerate())
 			return (x1 - x0)*(y1 - y0);
 		else
 			return 0;
 	}
 	double mu_area()
 	{
-		return Intersect(*this, rectangle(0, 4, 0, 4)).area() / 16;
+		return intersect(*this, rectangle(0, 4, 0, 4)).area() / 16;
 	}
 	bool is_inside(double x, double y)
 	{
@@ -71,7 +72,7 @@ struct rectangle
 		y1 = y1_;
 	}
 };
-rectangle Intersect(rectangle A, rectangle B)
+rectangle intersect(rectangle A, rectangle B)
 {
 	return rectangle(max(A.x0, B.x0), min(A.x1, B.x1), max(A.y0, B.y0), min(A.y1, B.y1));
 }
@@ -87,8 +88,8 @@ rectangle generate_warehouse_rectangle(const int i, const double omega)
 A cell is modeled as an array of (disjoint) rectangles. There is also a count variable that tells us how many rectangles there are.
 
 Currently the methods are:
-1. Intersect the cell with a given rectangle.
-2. Intersect the cell with the complement of a given rectangle (Outersect).
+1. intersect the cell with a given rectangle.
+2. intersect the cell with the complement of a given rectangle (Outersect).
 3. Compute the mu area of the cell. 
 4. Print the coordinates of each rectangle in the cell to OutputFile
 5. Delete all degenerate rectangles from cell.
@@ -103,40 +104,40 @@ struct cell
 {
 	//data
 	int count;
-	//Note that an application of Outsect_with_Rectangle can increase the number of pieces by at most 8
-	rectangle pieces[10 * N + 4];
+	//Note that an application of outersect_with_rectangle can increase the number of pieces by at most 8
+	rectangle pieces[10 * maxN + 4];
 	
 
 	//methods
-	void Intersect_with_Rectangle(rectangle A)
+	void intersect_with_rectangle(rectangle A)
 	{
 
 		for (int i = 0; i < count; i++)
 		{
-			pieces[i] = Intersect(pieces[i], A);
+			pieces[i] = intersect(pieces[i], A);
 		}
 
 		return;
 	}
-	void Outersect_with_Rectangle(rectangle A)
+	void outersect_with_rectangle(rectangle A)
 	{
-		int warning_flag;
+		int warningFlag;
 
-		int new_pieces_added = 0;
+		int newPiecesAdded = 0;
 
 		for (int i = 0; i < count; i++)
 		{
-			warning_flag = 0;
+			warningFlag = 0;
 
-			if (Intersect(pieces[i], A).isNondegenerate() != true)
+			if (intersect(pieces[i], A).is_nondegenerate() != true)
 				continue;
 
 			if (pieces[i].is_inside(A.x0, A.y0))
 			{
-				pieces[count + new_pieces_added] = rectangle(pieces[i].x0, A.x0, A.y0, pieces[i].y1);
-				new_pieces_added++;
-				pieces[count + new_pieces_added] = rectangle(A.x0, pieces[i].x1, pieces[i].y0, A.y0);
-				new_pieces_added++;
+				pieces[count + newPiecesAdded] = rectangle(pieces[i].x0, A.x0, A.y0, pieces[i].y1);
+				newPiecesAdded++;
+				pieces[count + newPiecesAdded] = rectangle(A.x0, pieces[i].x1, pieces[i].y0, A.y0);
+				newPiecesAdded++;
 
 				pieces[i].x1 = A.x0;
 				pieces[i].y1 = A.y0;
@@ -145,10 +146,10 @@ struct cell
 			}
 			if (pieces[i].is_inside(A.x1, A.y0))
 			{
-				pieces[count + new_pieces_added] = rectangle(A.x1, pieces[i].x1, A.y0, pieces[i].y1);
-				new_pieces_added++;
-				pieces[count + new_pieces_added] = rectangle(pieces[i].x0, A.x1, pieces[i].y0, A.y0);
-				new_pieces_added++;
+				pieces[count + newPiecesAdded] = rectangle(A.x1, pieces[i].x1, A.y0, pieces[i].y1);
+				newPiecesAdded++;
+				pieces[count + newPiecesAdded] = rectangle(pieces[i].x0, A.x1, pieces[i].y0, A.y0);
+				newPiecesAdded++;
 
 				pieces[i].x0 = A.x1;
 				pieces[i].y1 = A.y0;
@@ -157,10 +158,10 @@ struct cell
 			}
 			if (pieces[i].is_inside(A.x0, A.y1))
 			{
-				pieces[count + new_pieces_added] = rectangle(pieces[i].x0, A.x0, pieces[i].y0, A.y1);
-				new_pieces_added++;
-				pieces[count + new_pieces_added] = rectangle(A.x0, pieces[i].x1, A.y1, pieces[i].y1);
-				new_pieces_added++;
+				pieces[count + newPiecesAdded] = rectangle(pieces[i].x0, A.x0, pieces[i].y0, A.y1);
+				newPiecesAdded++;
+				pieces[count + newPiecesAdded] = rectangle(A.x0, pieces[i].x1, A.y1, pieces[i].y1);
+				newPiecesAdded++;
 
 				pieces[i].x1 = A.x0;
 				pieces[i].y0 = A.y1;
@@ -169,10 +170,10 @@ struct cell
 			}
 			if (pieces[i].is_inside(A.x1, A.y1))
 			{
-				pieces[count + new_pieces_added] = rectangle(pieces[i].x0, A.x1, A.y1, pieces[i].y1);
-				new_pieces_added++;
-				pieces[count + new_pieces_added] = rectangle(A.x1, pieces[i].x1, pieces[i].y0, A.y1);
-				new_pieces_added++;
+				pieces[count + newPiecesAdded] = rectangle(pieces[i].x0, A.x1, A.y1, pieces[i].y1);
+				newPiecesAdded++;
+				pieces[count + newPiecesAdded] = rectangle(A.x1, pieces[i].x1, pieces[i].y0, A.y1);
+				newPiecesAdded++;
 
 				pieces[i].x0 = A.x1;
 				pieces[i].y0 = A.y1;
@@ -183,29 +184,29 @@ struct cell
 			if (pieces[i].x1 > A.x0)
 			{
 				pieces[i].x1 = A.x0;
-				warning_flag++;
+				warningFlag++;
 			}
 			if (pieces[i].x0 < A.x1)
 			{
 				pieces[i].x0 = A.x1;
-				warning_flag++;
+				warningFlag++;
 			}
 			if (pieces[i].y1 > A.y0)
 			{
 				pieces[i].y1 = A.y0;
-				warning_flag++;
+				warningFlag++;
 			}
 			if (pieces[i].y0 < A.y1)
 			{
 				pieces[i].y0 = A.y1;
-				warning_flag++;
+				warningFlag++;
 			}
 
-			if (warning_flag > 1)
+			if (warningFlag > 1)
 				cerr << "Warning something is wrong. Multiple sides were cut from a cell piece." << endl;
 		}
 
-		count += new_pieces_added;
+		count += newPiecesAdded;
 
 		return;
 	}
@@ -229,7 +230,7 @@ struct cell
 	void remove_degenerate_rectangles()
 	{
 		for (int i = 0; i < count; i++)
-			if (pieces[i].isNondegenerate() == false)
+			if (pieces[i].is_nondegenerate() == false)
 			{
 				count--;
 				for (int j = i; j < count; j++)
@@ -254,11 +255,11 @@ struct cell
 It also prints the cells to the Output File */
 void compute_cell_graph(const double omega, double cellsizes[])
 {
-	rectangle warehouse_rectangles[N];
+	rectangle warehouseRectangles[maxN];
 
 	for (int i = 0; i < N; i++)
 	{
-		warehouse_rectangles[i] = generate_warehouse_rectangle(i, omega);
+		warehouseRectangles[i] = generate_warehouse_rectangle(i, omega);
 	}
 
 	cellsizes[0] = 0;
@@ -280,16 +281,16 @@ void compute_cell_graph(const double omega, double cellsizes[])
 			}
 		}
 
-		currentCell = cell(warehouse_rectangles[firstRectangle]);
+		currentCell = cell(warehouseRectangles[firstRectangle]);
 
 		for (int j = 0; j < N; j++)
 		{
 			if (j == firstRectangle)
 				continue;
 			else if (b[j] == 1)
-				currentCell.Intersect_with_Rectangle(warehouse_rectangles[j]);
+				currentCell.intersect_with_rectangle(warehouseRectangles[j]);
 			else
-				currentCell.Outersect_with_Rectangle(warehouse_rectangles[j]);
+				currentCell.outersect_with_rectangle(warehouseRectangles[j]);
 		}
 
 		cellsizes[i] = currentCell.mu_area();
@@ -306,9 +307,9 @@ int main()
 {
 	OutputFile << N << endl;
 
-	double cellsizes[1 << N];
+	double cellSizes[1 << maxN];
 
-	compute_cell_graph(0.6, cellsizes);
+	compute_cell_graph(0.6, cellSizes);
 
 	OutputFile.close();
 
