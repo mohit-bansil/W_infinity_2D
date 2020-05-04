@@ -6,10 +6,13 @@
 using namespace std;
 
 const int maxN = 10;
-int N = 3;
+const double tolerance = 0.0000001;
+
+int N;
 double y[maxN][2] = { { 0,0 },{ 1,1 },{ 2,2 } };
 double lambda[maxN];
 
+ifstream InputFile("Input_Data.txt");
 ofstream OutputFile("Cell_Data.txt");
 
 /*
@@ -203,7 +206,7 @@ struct cell
 			}
 
 			if (warningFlag > 1)
-				cerr << "Warning something is wrong. Multiple sides were cut from a cell piece." << endl;
+				cerr << "Warning something might be wrong. Multiple sides were cut from a cell piece." << endl;
 		}
 
 		count += newPiecesAdded;
@@ -251,7 +254,7 @@ struct cell
 	}
 };
 
-/*This function takes in an omega stores the omega-transport graph in the array cellsizes.
+/*This function takes in an omega stores the left verticies of the omega-transport graph in the array cellsizes.
 It also prints the cells to the Output File */
 void compute_cell_graph(const double omega, double cellsizes[])
 {
@@ -262,9 +265,8 @@ void compute_cell_graph(const double omega, double cellsizes[])
 		warehouseRectangles[i] = generate_warehouse_rectangle(i, omega);
 	}
 
-	cellsizes[0] = 0;
-
 	cell currentCell;
+	double currentSumOfCellMuSizes = 0;
 
 	for (int i = 1; i < (1 << N); i++)
 	{
@@ -295,21 +297,73 @@ void compute_cell_graph(const double omega, double cellsizes[])
 
 		cellsizes[i] = currentCell.mu_area();
 
+		currentSumOfCellMuSizes += cellsizes[i];
+
 		currentCell.remove_degenerate_rectangles();
 		currentCell.print();
 
 	}
 
+	cellsizes[0] = 1 - currentSumOfCellMuSizes;
+
 	return;
+}
+
+/* This function takes a transport graph and determines if there is a perfect matching*/
+bool is_there_perfect_matching(double cellsizes[])
+{
+	//while this isn't needed it should make the code much faster
+	if (cellsizes[0] > tolerance)
+		return false;
+
+	double leftsum, rightsum;
+
+	for (int i = 1; i < (1 << N); i++)
+	{
+		leftsum = 0;
+		rightsum = 0;
+		bitset<32>currentSubsetBeingChecked(i);
+
+		for (int j = 0; j < N; j++)
+		{
+			if (currentSubsetBeingChecked[j] == 1)
+				rightsum += lambda[j];
+		}
+
+		for (int j = 1; i < (1 << N); i++)
+		{
+			bitset<32>currentCellBeingChecked(j);
+
+			for (int k = 0; k < N; k++)
+			{
+				if (currentCellBeingChecked[k] == 1 && currentSubsetBeingChecked[k] == 1)
+				{
+					leftsum += cellsizes[j];
+					break;
+				}
+			}
+		}
+
+	}
+
+	return true;
 }
 
 int main()
 {
+	InputFile >> N;
+
+	for (int i = 0; i < N; i++)
+		InputFile >> lambda[i];
+
+
 	OutputFile << N << endl;
 
 	double cellSizes[1 << maxN];
 
-	compute_cell_graph(0.6, cellSizes);
+	compute_cell_graph(5, cellSizes);
+
+	OutputFile << endl << is_there_perfect_matching(cellSizes) << endl;
 
 	OutputFile.close();
 

@@ -9,9 +9,13 @@ import numpy as np
 import cv2 as cv
 import random as rand
 
+mode = "all seperate"
+#all seperate means that the program will display each cell one at a time
+#combined means that the program will display all cells at once
 W = 700
-inputsmin = -1
-inputsmax = 3
+
+inputsmin = -6
+inputsmax = 8
 
 
 window = "Cell Diagram"
@@ -38,11 +42,17 @@ for j in range(2**N - 1):
         y1 = W - image_coordinates(float(y1))
         
         cv.rectangle(image, (x0,y0), (x1,y1), color, -1, 8)
+        
+    if(mode == "all seperate"):
+        cv.imshow(window, image)
+        cv.moveWindow(window, W, 200)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
-
-cv.imshow(window, image)
-
-cv.moveWindow(window, W, 200)
-cv.waitKey(0)
-cv.imwrite("Cell_Diagram.png", image)
-cv.destroyAllWindows()
+if(mode == "combined"):
+    cv.imshow(window, image)
+    
+    cv.moveWindow(window, W, 200)
+    cv.waitKey(0)
+    cv.imwrite("Cell_Diagram.png", image)
+    cv.destroyAllWindows()
