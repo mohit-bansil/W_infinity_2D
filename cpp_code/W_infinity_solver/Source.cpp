@@ -9,11 +9,11 @@ const int maxN = 10;
 const double tolerance = 0.0000001;
 
 int N;
-double y[maxN][2] = { { 0,0 },{ 1,1 },{ 2,2 } };
+double y[maxN][2];
 double lambda[maxN];
 
-ifstream InputFile("Input_Data.txt");
-ofstream OutputFile("Cell_Data.txt");
+ifstream inputFile("Input_Data.txt");
+ofstream cellOutputFile("Cell_Data.txt");
 
 /*
 Rectangle object is charaterized by its left and right x coordinates and its upper and lower y coordinates
@@ -22,7 +22,7 @@ Currently methods are
 2. Find area
 3. Find mu area (area of rectangle intersected with mu)
 4. Determine if a point is inside the rectangle
-5. Print the coordinates of the rectangle to OutputFile
+5. Print the coordinates of the rectangle to cellOutputFile
 6. intersect two rectangles
 
 Also note that the definition of mu is inside of the mu_area function
@@ -62,7 +62,7 @@ struct rectangle
 	}
 	void print()
 	{
-		OutputFile << x0 << " " << x1 << " " << y0 << " " << y1 << endl;
+		cellOutputFile << x0 << " " << x1 << " " << y0 << " " << y1 << endl;
 	}
 
 	//constructors
@@ -94,7 +94,7 @@ Currently the methods are:
 1. intersect the cell with a given rectangle.
 2. intersect the cell with the complement of a given rectangle (Outersect).
 3. Compute the mu area of the cell. 
-4. Print the coordinates of each rectangle in the cell to OutputFile
+4. Print the coordinates of each rectangle in the cell to cellOutputFile
 5. Delete all degenerate rectangles from cell.
 
 WARNING!!! The way Outersect is written, it assumes that the outersecting rectangle 
@@ -225,7 +225,7 @@ struct cell
 	}
 	void print()
 	{
-		OutputFile << count << endl;
+		cellOutputFile << count << endl;
 		for (int i = 0; i < count; i++)
 			pieces[i].print();
 
@@ -256,7 +256,7 @@ struct cell
 
 /*This function takes in an omega stores the left verticies of the omega-transport graph in the array cellsizes.
 It also prints the cells to the Output File */
-void compute_cell_graph(const double omega, double cellsizes[])
+void compute_cell_graph(const double omega, double cellsizes[], bool printCells)
 {
 	rectangle warehouseRectangles[maxN];
 
@@ -299,8 +299,11 @@ void compute_cell_graph(const double omega, double cellsizes[])
 
 		currentSumOfCellMuSizes += cellsizes[i];
 
-		currentCell.remove_degenerate_rectangles();
-		currentCell.print();
+		if (printCells)
+		{
+			currentCell.remove_degenerate_rectangles();
+			currentCell.print();
+		}
 
 	}
 
@@ -349,23 +352,51 @@ bool is_there_perfect_matching(double cellsizes[])
 	return true;
 }
 
-int main()
+/* This function reads the values of N, lambda, y from the input file*/
+void input_data()
 {
-	InputFile >> N;
+	inputFile >> N;
 
 	for (int i = 0; i < N; i++)
-		InputFile >> lambda[i];
+		inputFile >> lambda[i];
 
+	for (int i = 0; i < N; i++)
+		inputFile >> y[i][0] >> y[i][1];
+}
 
-	OutputFile << N << endl;
-
+/* This function solves the W_infinity transport problem to within an error of desiredError.
+The resulting cell decomposition and the upper/lower omega bounds are written to the cellOutputFile*/
+void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError)
+{
+	double currentOmegaGuess;
 	double cellSizes[1 << maxN];
 
-	compute_cell_graph(5, cellSizes);
+	while (upperOmegaBound - lowerOmegaBound > desiredError)
+	{
+		currentOmegaGuess = (lowerOmegaBound + upperOmegaBound) / 2;
+		compute_cell_graph(currentOmegaGuess, cellSizes, false);
+		if (is_there_perfect_matching(cellSizes))
+			upperOmegaBound = currentOmegaGuess;
+		else
+			lowerOmegaBound = currentOmegaGuess;
+	}
 
-	OutputFile << endl << is_there_perfect_matching(cellSizes) << endl;
+	compute_cell_graph(upperOmegaBound, cellSizes, true);
 
-	OutputFile.close();
+	cellOutputFile << endl << lowerOmegaBound << " " << upperOmegaBound << endl;
+
+	return;
+}
+
+int main()
+{
+	input_data();
+
+	cellOutputFile << N << endl;
+
+	solve(0, 100, 0.1);
+
+	cellOutputFile.close();
 
 	//system("pause");
 	return 0;

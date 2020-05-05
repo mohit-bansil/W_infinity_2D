@@ -29,6 +29,16 @@ def image_coordinates(x):
 f = open("Cell_Data.txt", 'r')
 N = int(f.readline())
 
+'''
+used just to visualize support of mu
+x0 = image_coordinates(float(0))
+x1 = image_coordinates(float(4))
+y0 = W - image_coordinates(float(0))
+y1 = W - image_coordinates(float(4))
+
+cv.rectangle(image, (x0,y0), (x1,y1), (0,255,255), -1, 8)
+'''
+
 for j in range(2**N - 1):
     count = int(f.readline())
     
