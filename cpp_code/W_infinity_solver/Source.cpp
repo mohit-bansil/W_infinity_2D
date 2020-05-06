@@ -326,14 +326,16 @@ bool is_there_perfect_matching(double cellsizes[])
 		leftsum = 0;
 		rightsum = 0;
 		bitset<32>currentSubsetBeingChecked(i);
-
+		
+		//Compute sum of weights of the right verticies in the current subset being checked
 		for (int j = 0; j < N; j++)
 		{
 			if (currentSubsetBeingChecked[j] == 1)
 				rightsum += lambda[j];
 		}
 
-		for (int j = 1; i < (1 << N); i++)
+		//Compute sum of weights of neighbor (left) verticies in the current subset being checked
+		for (int j = 1; j < (1 << N); j++)
 		{
 			bitset<32>currentCellBeingChecked(j);
 
@@ -346,6 +348,9 @@ bool is_there_perfect_matching(double cellsizes[])
 				}
 			}
 		}
+
+		if (leftsum > rightsum)
+			return false;
 
 	}
 
@@ -365,11 +370,11 @@ void input_data()
 }
 
 /* This function solves the W_infinity transport problem to within an error of desiredError.
+The array cellSizes is written with the resulting transport graph vertex weights
 The resulting cell decomposition and the upper/lower omega bounds are written to the cellOutputFile*/
-void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError)
+void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError, double cellSizes[])
 {
 	double currentOmegaGuess;
-	double cellSizes[1 << maxN];
 
 	while (upperOmegaBound - lowerOmegaBound > desiredError)
 	{
@@ -390,11 +395,13 @@ void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError)
 
 int main()
 {
+	double cellSizes[1 << maxN];
+
 	input_data();
 
 	cellOutputFile << N << endl;
 
-	solve(0, 100, 0.1);
+	solve(0, 100, 0.1, cellSizes);
 
 	cellOutputFile.close();
 
