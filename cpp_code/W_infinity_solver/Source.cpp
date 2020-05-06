@@ -406,35 +406,24 @@ struct vertex {
 	}
 };
 
-void edmondKarp(double leftVertexWeights[], double rightVertexWeights[])
-{
-
-
-	return;
-}
-
-bool shortestPath(const double leftVertexWeights[], const double rightVertexWeights[], double partialMatching[][maxN], double partialLeftSums[], double partialRightSums[])
+int shortestPath(const double leftVertexWeights[], const double rightVertexWeights[], const double partialMatching[][maxN], const double partialLeftSums[], const double partialRightSums[], int leftVerticiesPreviousVertex[], int rightVerticiesPreviousVertex[])
 {
 	vertex queue[1 << maxN];
 	int queueCurrentPosition = 0;
 	int queueSize = 0;
 
-
-	int leftVerticiesDistanceFromSource[1 << maxN];
-	int rightVerticiesDistanceFromSource[maxN];
-
-	//Initialize all distances to +infinity (represented by -1)
+	//Initialize all previous verticies to -1
 	for (int i = 0; i < (1 << N); i++)
-		leftVerticiesDistanceFromSource[i] = -1;
+		leftVerticiesPreviousVertex[i] = -1;
 	for (int i = 0; i < N; i++)
-		rightVerticiesDistanceFromSource[i] = -1;
+		rightVerticiesPreviousVertex[i] = -1;
 
-	//Set all left verticies connected to the source to have distance one and put them in the queue
+	//Set all left verticies connected to the source to have previous vertex -2 (for source) and put them in the queue
 	for (int i = 1; i < (1 << N); i++)
 	{
-		if (leftVertexWeights[i] < partialLeftSums[i] - tolerance)
+		if (partialLeftSums[i] < leftVertexWeights[i] - tolerance)
 		{
-			leftVerticiesDistanceFromSource[i] = 1;
+			leftVerticiesPreviousVertex[i] = -2;
 			queue[queueSize] = vertex(i, true);
 			queueSize++;
 		}
@@ -450,18 +439,20 @@ bool shortestPath(const double leftVertexWeights[], const double rightVertexWeig
 			bitset<32>currentLeftVertex(currentVertexNum);
 			for (int j = 0; j < N; j++)
 			{
-				if (currentLeftVertex[j] == 1 && rightVerticiesDistanceFromSource[j] == -1)
+				if (currentLeftVertex[j] == 1 && rightVerticiesPreviousVertex[j] == -1)
 				{
+					rightVerticiesPreviousVertex[j] = currentVertexNum;
+					queue[queueSize] = vertex(j, false);
+					queueSize++;
+
 					//Check if we can get to the sink!!!
 					if (partialRightSums[j] < rightVertexWeights[j] - tolerance)
 					{
-						cout << "I found the shorted path!" << endl;
-						return true;
+//						cout << "I found the shorted path!" << endl;
+						return j;
 					}
 
-					rightVerticiesDistanceFromSource[j] = leftVerticiesDistanceFromSource[currentVertexNum] + 1;
-					queue[queueSize] = vertex(j, false);
-					queueSize++;
+
 				}
 			}
 		}
@@ -472,9 +463,9 @@ bool shortestPath(const double leftVertexWeights[], const double rightVertexWeig
 			{
 				bitset<32>leftVertex(j);
 
-				if (partialMatching[j][currentVertexNum] > tolerance && leftVertex[currentVertexNum] == 1 && leftVerticiesDistanceFromSource[j] == -1)
+				if (partialMatching[j][currentVertexNum] > tolerance && leftVertex[currentVertexNum] == 1 && leftVerticiesPreviousVertex[j] == -1)
 				{
-					leftVerticiesDistanceFromSource[j] = rightVerticiesDistanceFromSource[currentVertexNum] + 1;
+					leftVerticiesPreviousVertex[j] = currentVertexNum;
 					queue[queueSize] = vertex(j, true);
 					queueSize++;
 				}
@@ -482,11 +473,76 @@ bool shortestPath(const double leftVertexWeights[], const double rightVertexWeig
 		}
 	}
 
-	cout << "There is no path" << endl;
+//	cout << "There is no path." << endl;
 
-	return false;
+	return -1;
 }
 
+void edmondKarp(const double leftVertexWeights[], const double rightVertexWeights[], double partialMatching[][maxN])
+{
+	double partialLeftSums[1 << maxN];
+	double partialRightSums[maxN];
+
+	int shortestPathLeftVerticiesPreviousVertex[1 << maxN];
+	int shortestPathRightVerticiesPreviousVertex[maxN];
+
+	//Initialize partialMatching and its left and right sums
+	for (int i = 0; i < (1 << N); i++)
+	{
+		for (int j = 0; j < N; j++)
+			partialMatching[i][j] = 0;
+	}
+	for (int i = 0; i < (1 << N); i++)
+		partialLeftSums[i] = 0;
+	for (int j = 0; j < N; j++)
+		partialRightSums[j] = 0;
+
+
+	int shortestPathLastVextex = shortestPath(leftVertexWeights, rightVertexWeights, partialMatching, partialLeftSums, partialRightSums, shortestPathLeftVerticiesPreviousVertex, shortestPathRightVerticiesPreviousVertex);
+	
+	double capacityMatched;
+	int currentRightVertexNum;
+	int currentLeftVertexNum;
+	while (shortestPathLastVextex != -1)
+	{
+		//Update partial matching
+
+		//First we find the capacity of our path
+		capacityMatched = rightVertexWeights[shortestPathLastVextex] - partialRightSums[shortestPathLastVextex];
+		currentRightVertexNum = shortestPathLastVextex;
+		while (currentRightVertexNum != -2)
+		{
+			currentLeftVertexNum = shortestPathRightVerticiesPreviousVertex[currentRightVertexNum];
+			capacityMatched = min(capacityMatched, partialMatching[currentLeftVertexNum][shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum] ]);
+			currentRightVertexNum = shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum] ;
+		}
+
+		capacityMatched = min(capacityMatched, leftVertexWeights[currentLeftVertexNum] - partialLeftSums[currentLeftVertexNum]);
+
+		//Now we update our partial matching with the new path and its capacity computed above
+		partialLeftSums[currentLeftVertexNum] += capacityMatched;
+		partialRightSums[shortestPathLastVextex] += capacityMatched;
+
+		currentRightVertexNum = shortestPathLastVextex;
+		while (currentRightVertexNum != -2)
+		{
+			currentLeftVertexNum = shortestPathRightVerticiesPreviousVertex[currentRightVertexNum];
+			
+			partialMatching[currentLeftVertexNum][shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum]] += capacityMatched;
+			
+			currentRightVertexNum = shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum];
+
+			if(currentRightVertexNum != -2)
+				partialMatching[currentLeftVertexNum][shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum]] -= capacityMatched;
+
+		}
+
+		//Grab new shortest path
+		shortestPathLastVextex = shortestPath(leftVertexWeights, rightVertexWeights, partialMatching, partialLeftSums, partialRightSums, shortestPathLeftVerticiesPreviousVertex, shortestPathRightVerticiesPreviousVertex);
+	}
+
+	return;
+}
 
 int main()
 {
@@ -499,6 +555,9 @@ int main()
 	solve(0, 100, 0.1, cellSizes);
 
 	cellOutputFile.close();
+
+	double partialMatching[1 << maxN][maxN];
+	edmondKarp(cellSizes, lambda, partialMatching);
 
 	//system("pause");
 	return 0;
