@@ -393,6 +393,101 @@ void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError, 
 	return;
 }
 
+
+struct vertex {
+	int num;
+	bool isLeft;
+
+	vertex() {	}
+	vertex(int num_, bool isLeft_)
+	{
+		num = num_;
+		isLeft = isLeft_;
+	}
+};
+
+void edmondKarp(double leftVertexWeights[], double rightVertexWeights[])
+{
+
+
+	return;
+}
+
+bool shortestPath(const double leftVertexWeights[], const double rightVertexWeights[], double partialMatching[][maxN], double partialLeftSums[], double partialRightSums[])
+{
+	vertex queue[1 << maxN];
+	int queueCurrentPosition = 0;
+	int queueSize = 0;
+
+
+	int leftVerticiesDistanceFromSource[1 << maxN];
+	int rightVerticiesDistanceFromSource[maxN];
+
+	//Initialize all distances to +infinity (represented by -1)
+	for (int i = 0; i < (1 << N); i++)
+		leftVerticiesDistanceFromSource[i] = -1;
+	for (int i = 0; i < N; i++)
+		rightVerticiesDistanceFromSource[i] = -1;
+
+	//Set all left verticies connected to the source to have distance one and put them in the queue
+	for (int i = 1; i < (1 << N); i++)
+	{
+		if (leftVertexWeights[i] < partialLeftSums[i] - tolerance)
+		{
+			leftVerticiesDistanceFromSource[i] = 1;
+			queue[queueSize] = vertex(i, true);
+			queueSize++;
+		}
+	}
+
+	for (queueCurrentPosition; queueCurrentPosition < queueSize; queueCurrentPosition++)
+	{
+		int currentVertexNum = queue[queueCurrentPosition].num;
+
+		//current vertex in queue is a left vertex
+		if (queue[queueCurrentPosition].isLeft)
+		{
+			bitset<32>currentLeftVertex(currentVertexNum);
+			for (int j = 0; j < N; j++)
+			{
+				if (currentLeftVertex[j] == 1 && rightVerticiesDistanceFromSource[j] == -1)
+				{
+					//Check if we can get to the sink!!!
+					if (partialRightSums[j] < rightVertexWeights[j] - tolerance)
+					{
+						cout << "I found the shorted path!" << endl;
+						return true;
+					}
+
+					rightVerticiesDistanceFromSource[j] = leftVerticiesDistanceFromSource[currentVertexNum] + 1;
+					queue[queueSize] = vertex(j, false);
+					queueSize++;
+				}
+			}
+		}
+		//current vertex in queue is a right vertex
+		else
+		{
+			for (int j = 1; j < (1 << N); j++)
+			{
+				bitset<32>leftVertex(j);
+
+				if (partialMatching[j][currentVertexNum] > tolerance && leftVertex[currentVertexNum] == 1 && leftVerticiesDistanceFromSource[j] == -1)
+				{
+					leftVerticiesDistanceFromSource[j] = rightVerticiesDistanceFromSource[currentVertexNum] + 1;
+					queue[queueSize] = vertex(j, true);
+					queueSize++;
+				}
+			}
+		}
+	}
+
+	cout << "There is no path" << endl;
+
+	return false;
+}
+
+
 int main()
 {
 	double cellSizes[1 << maxN];
