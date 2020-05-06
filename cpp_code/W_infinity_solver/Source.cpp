@@ -14,6 +14,7 @@ double lambda[maxN];
 
 ifstream inputFile("Input_Data.txt");
 ofstream cellOutputFile("Cell_Data.txt");
+ofstream optimalTransportPlan("Optimal_Transport_Plan.txt");
 
 /*
 Rectangle object is charaterized by its left and right x coordinates and its upper and lower y coordinates
@@ -205,8 +206,8 @@ struct cell
 				warningFlag++;
 			}
 
-			if (warningFlag > 1)
-				cerr << "Warning something might be wrong. Multiple sides were cut from a cell piece." << endl;
+//			if (warningFlag > 1)
+//				cerr << "Warning something might be wrong. Multiple sides were cut from a cell piece." << endl;
 		}
 
 		count += newPiecesAdded;
@@ -393,7 +394,7 @@ void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError, 
 	return;
 }
 
-
+// bool for left or right and a number
 struct vertex {
 	int num;
 	bool isLeft;
@@ -406,6 +407,12 @@ struct vertex {
 	}
 };
 
+/* This function finds the shortest path between the source and sink in the residual flow graph.
+The return value is the vertex number of the last right vertex of the shortest path. -1 is returned if no path is found.
+The path data found is stored in leftVerticiesPreviousVertex and rightVerticiesPreviousVertex, 
+For example if k is the number of a left vertex in the shortest path leftVerticiesPreviousVertex[k] is the number of the right vertex that preceeds it
+-2 is used for the source vertex
+*/
 int shortestPath(const double leftVertexWeights[], const double rightVertexWeights[], const double partialMatching[][maxN], const double partialLeftSums[], const double partialRightSums[], int leftVerticiesPreviousVertex[], int rightVerticiesPreviousVertex[])
 {
 	vertex queue[1 << maxN];
@@ -448,7 +455,6 @@ int shortestPath(const double leftVertexWeights[], const double rightVertexWeigh
 					//Check if we can get to the sink!!!
 					if (partialRightSums[j] < rightVertexWeights[j] - tolerance)
 					{
-//						cout << "I found the shorted path!" << endl;
 						return j;
 					}
 
@@ -473,11 +479,12 @@ int shortestPath(const double leftVertexWeights[], const double rightVertexWeigh
 		}
 	}
 
-//	cout << "There is no path." << endl;
-
 	return -1;
 }
 
+/* This function finds the a maximal matching in the transport graph given by leftVertexWeights and rightVertexWeights
+It is stored in partialMatching
+*/
 void edmondKarp(const double leftVertexWeights[], const double rightVertexWeights[], double partialMatching[][maxN])
 {
 	double partialLeftSums[1 << maxN];
@@ -546,6 +553,22 @@ void edmondKarp(const double leftVertexWeights[], const double rightVertexWeight
 	return;
 }
 
+/* This function prints the Optimal Transport Plan to the optimalTransportPlan output file*/
+void writeOptimalTransportPlan(double partialMatching[][maxN])
+{
+	optimalTransportPlan << N << endl;
+
+	for (int i = 0; i < (1 << N); i++)
+	{
+		for (int j = 0; j < N; j++)
+			optimalTransportPlan << partialMatching[i][j] << " ";
+		optimalTransportPlan << endl;
+	}
+
+	optimalTransportPlan << endl;
+	return;
+}
+
 int main()
 {
 	double cellSizes[1 << maxN];
@@ -561,6 +584,7 @@ int main()
 	double partialMatching[1 << maxN][maxN];
 	edmondKarp(cellSizes, lambda, partialMatching);
 
-	//system("pause");
+	writeOptimalTransportPlan(partialMatching);
+
 	return 0;
 }
