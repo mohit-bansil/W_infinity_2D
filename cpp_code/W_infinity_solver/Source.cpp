@@ -349,7 +349,7 @@ bool is_there_perfect_matching(double cellsizes[])
 			}
 		}
 
-		if (leftsum > rightsum)
+		if (leftsum < rightsum)
 			return false;
 
 	}
@@ -510,9 +510,11 @@ void edmondKarp(const double leftVertexWeights[], const double rightVertexWeight
 		//First we find the capacity of our path
 		capacityMatched = rightVertexWeights[shortestPathLastVextex] - partialRightSums[shortestPathLastVextex];
 		currentRightVertexNum = shortestPathLastVextex;
-		while (currentRightVertexNum != -2)
+		while (true)
 		{
 			currentLeftVertexNum = shortestPathRightVerticiesPreviousVertex[currentRightVertexNum];
+			if (shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum] == -2)
+				break;
 			capacityMatched = min(capacityMatched, partialMatching[currentLeftVertexNum][shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum] ]);
 			currentRightVertexNum = shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum] ;
 		}
@@ -528,7 +530,7 @@ void edmondKarp(const double leftVertexWeights[], const double rightVertexWeight
 		{
 			currentLeftVertexNum = shortestPathRightVerticiesPreviousVertex[currentRightVertexNum];
 			
-			partialMatching[currentLeftVertexNum][shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum]] += capacityMatched;
+			partialMatching[currentLeftVertexNum][currentRightVertexNum] += capacityMatched;
 			
 			currentRightVertexNum = shortestPathLeftVerticiesPreviousVertex[currentLeftVertexNum];
 
