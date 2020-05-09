@@ -1,3 +1,20 @@
+/*
+W_infinity_solver
+
+Author: Mohit Bansil
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include<iostream>
 #include<fstream>
 #include <algorithm>
@@ -389,7 +406,7 @@ void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError, 
 
 	compute_cell_graph(upperOmegaBound, cellSizes, true);
 
-	cellOutputFile << endl << lowerOmegaBound << " " << upperOmegaBound << endl;
+//	cellOutputFile << endl << lowerOmegaBound << " " << upperOmegaBound << endl;
 
 	return;
 }
@@ -569,13 +586,25 @@ void writeOptimalTransportPlan(double partialMatching[][maxN])
 	return;
 }
 
+void prepareCellOutputFile()
+{
+	cellOutputFile << "#This file contains the data on the cell decomposition." << endl << "#" << endl;
+	
+	cellOutputFile << "#The first line is N, which is the number of warehouses." << endl;
+	cellOutputFile << "#Then there are 2^N -1 blocks each representing one cell." << endl;
+	cellOutputFile << "#The first line of each block gives b_i the number of disjoint rectangles in the cell." << endl;
+	cellOutputFile << "#Each of the next b_i lines in a block give the coordinates of one rectangle in the cell." << endl;
+	cellOutputFile << "#The rectangles are given as x0, x1, y0, y1." << endl;
+	cellOutputFile << "#" << endl;
+	cellOutputFile << N << endl;
+}
+
 int main()
 {
 	double cellSizes[1 << maxN];
 
 	input_data();
-
-	cellOutputFile << N << endl;
+	prepareCellOutputFile();
 
 	solve(0, 100, 0.1, cellSizes);
 

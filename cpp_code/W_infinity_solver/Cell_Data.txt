@@ -1,3 +1,11 @@
+#This file contains the data on the cell decomposition.
+#
+#The first line is N, which is the number of warehouses.
+#Then there are 2^N -1 blocks each representing one cell.
+#The first line of each block gives b_i the number of disjoint rectangles in the cell.
+#Each of the next b_i lines in a block give the coordinates of one rectangle in the cell.
+#The rectangles are given as x0, x1, y0, y1.
+#
 4
 7
 -2.44141 -2.44141 -2.44141 1.55859
@@ -69,5 +77,3 @@
 1.55859 2.44141 2.44141 2.44141
 1
 1.55859 2.44141 1.55859 2.44141
-
-2.34375 2.44141
