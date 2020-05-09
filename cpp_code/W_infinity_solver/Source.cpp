@@ -22,16 +22,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 
-const int maxN = 10;
+struct rectangle;
+rectangle intersect(rectangle A, rectangle B);
+
+const int maxN = 8;
 const double tolerance = 0.0000001;
 
 int N;
 double y[maxN][2];
 double lambda[maxN];
+rectangle* pointerMu;
+
 
 ifstream inputFile("Input_Data.txt");
 ofstream cellOutputFile("Cell_Data.txt");
-ofstream optimalTransportPlan("Optimal_Transport_Plan.txt");
+ofstream cellOutputFileWithMu("Cell_Data_With_Mu.txt");
+ofstream optimalTransportPlanFile("Optimal_Transport_Plan.txt");
 
 /*
 Rectangle object is charaterized by its left and right x coordinates and its upper and lower y coordinates
@@ -42,11 +48,10 @@ Currently methods are
 4. Determine if a point is inside the rectangle
 5. Print the coordinates of the rectangle to cellOutputFile
 6. intersect two rectangles
-
-Also note that the definition of mu is inside of the mu_area function
 */
-struct rectangle;
-rectangle intersect(rectangle A, rectangle B);
+
+
+
 struct rectangle
 {
 	//data
@@ -69,7 +74,7 @@ struct rectangle
 	}
 	double mu_area()
 	{
-		return intersect(*this, rectangle(0, 4, 0, 4)).area() / 16;
+		return intersect(*this, *pointerMu).area() / ((*pointerMu).area());
 	}
 	bool is_inside(double x, double y)
 	{
@@ -81,6 +86,10 @@ struct rectangle
 	void print()
 	{
 		cellOutputFile << x0 << " " << x1 << " " << y0 << " " << y1 << endl;
+	}
+	void print_mu()
+	{
+		cellOutputFileWithMu << x0 << " " << x1 << " " << y0 << " " << y1 << endl;
 	}
 
 	//constructors
@@ -248,6 +257,13 @@ struct cell
 			pieces[i].print();
 
 	}
+	void print_mu()
+	{
+		cellOutputFileWithMu << (*this).mu_area() << endl;
+		cellOutputFileWithMu << count << endl;
+		for (int i = 0; i < count; i++)
+			pieces[i].print_mu();
+	}
 	void remove_degenerate_rectangles()
 	{
 		for (int i = 0; i < count; i++)
@@ -274,7 +290,7 @@ struct cell
 
 /*This function takes in an omega stores the left verticies of the omega-transport graph in the array cellsizes.
 It also prints the cells to the Output File */
-void compute_cell_graph(const double omega, double cellsizes[], bool printCells)
+void compute_cell_graph(const double omega, double cellsizes[], bool printCells, bool printCellsMu)
 {
 	rectangle warehouseRectangles[maxN];
 
@@ -323,6 +339,12 @@ void compute_cell_graph(const double omega, double cellsizes[], bool printCells)
 			currentCell.print();
 		}
 
+		if (printCellsMu)
+		{
+			currentCell.intersect_with_rectangle(*pointerMu);
+			currentCell.remove_degenerate_rectangles();
+			currentCell.print_mu();
+		}
 	}
 
 	cellsizes[0] = 1 - currentSumOfCellMuSizes;
@@ -397,14 +419,14 @@ void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError, 
 	while (upperOmegaBound - lowerOmegaBound > desiredError)
 	{
 		currentOmegaGuess = (lowerOmegaBound + upperOmegaBound) / 2;
-		compute_cell_graph(currentOmegaGuess, cellSizes, false);
+		compute_cell_graph(currentOmegaGuess, cellSizes, false, false);
 		if (is_there_perfect_matching(cellSizes))
 			upperOmegaBound = currentOmegaGuess;
 		else
 			lowerOmegaBound = currentOmegaGuess;
 	}
 
-	compute_cell_graph(upperOmegaBound, cellSizes, true);
+	compute_cell_graph(upperOmegaBound, cellSizes, true, true);
 
 //	cellOutputFile << endl << lowerOmegaBound << " " << upperOmegaBound << endl;
 
@@ -573,30 +595,41 @@ void edmondKarp(const double leftVertexWeights[], const double rightVertexWeight
 /* This function prints the Optimal Transport Plan to the optimalTransportPlan output file*/
 void writeOptimalTransportPlan(double partialMatching[][maxN])
 {
-	optimalTransportPlan << N << endl;
+	optimalTransportPlanFile << N << endl;
 
 	for (int i = 0; i < (1 << N); i++)
 	{
 		for (int j = 0; j < N; j++)
-			optimalTransportPlan << partialMatching[i][j] << " ";
-		optimalTransportPlan << endl;
+			optimalTransportPlanFile << partialMatching[i][j] << " ";
+		optimalTransportPlanFile << endl;
 	}
 
-	optimalTransportPlan << endl;
+	optimalTransportPlanFile << endl;
 	return;
 }
 
-void prepareCellOutputFile()
+void prepareCellOutputFiles()
 {
-	cellOutputFile << "#This file contains the data on the cell decomposition." << endl << "#" << endl;
-	
+	cellOutputFile << "#This file contains the data on the cell decomposition." << endl << "#" << endl;	
 	cellOutputFile << "#The first line is N, which is the number of warehouses." << endl;
 	cellOutputFile << "#Then there are 2^N -1 blocks each representing one cell." << endl;
 	cellOutputFile << "#The first line of each block gives b_i the number of disjoint rectangles in the cell." << endl;
 	cellOutputFile << "#Each of the next b_i lines in a block give the coordinates of one rectangle in the cell." << endl;
 	cellOutputFile << "#The rectangles are given as x0, x1, y0, y1." << endl;
+	cellOutputFile << "#Note that the cell corresponding to the empty set isn't printed!" << endl;
 	cellOutputFile << "#" << endl;
 	cellOutputFile << N << endl;
+
+	cellOutputFileWithMu << "#This file contains the data on the cell decomposition after intersection with the support of mu." << endl << "#" << endl;
+	cellOutputFileWithMu << "#The first line is N, which is the number of warehouses." << endl;
+	cellOutputFileWithMu << "#Then there are 2^N -1 blocks each representing one cell." << endl;
+	cellOutputFileWithMu << "#The first line of each block gives the mu measure of the cell." << endl;
+	cellOutputFileWithMu << "#The second line of each block gives b_i the number of disjoint rectangles in the cell." << endl;
+	cellOutputFileWithMu << "#Each of the next b_i lines in a block give the coordinates of one rectangle in the cell." << endl;
+	cellOutputFileWithMu << "#The rectangles are given as x0, x1, y0, y1." << endl;
+	cellOutputFileWithMu << "#Note that the cell corresponding to the empty set isn't printed!" << endl;
+	cellOutputFileWithMu << "#" << endl;
+	cellOutputFileWithMu << N << endl;
 }
 
 int main()
@@ -604,7 +637,10 @@ int main()
 	double cellSizes[1 << maxN];
 
 	input_data();
-	prepareCellOutputFile();
+	prepareCellOutputFiles();
+
+	rectangle mu = rectangle(0, 4, 0, 4);
+	pointerMu = &mu;
 
 	solve(0, 100, 0.1, cellSizes);
 

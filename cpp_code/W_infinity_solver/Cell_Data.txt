@@ -5,6 +5,7 @@
 #The first line of each block gives b_i the number of disjoint rectangles in the cell.
 #Each of the next b_i lines in a block give the coordinates of one rectangle in the cell.
 #The rectangles are given as x0, x1, y0, y1.
+#Note that the cell corresponding to the empty set isn't printed!
 #
 4
 7
