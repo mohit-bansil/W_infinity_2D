@@ -21,19 +21,18 @@ import cv2 as cv
 import random as rand
 
 cellDataFileLocation = "Cell_Data.txt"
-
-#all seperate means that the program will display each cell one at a time
-#combined means that the program will display all cells at once
-mode = "all seperate"
+cellDataWithMuFileLocation = "Cell_Data_With_Mu.txt"
+transportPlanDataFileLocation = "Optimal_Transport_Plan.txt"
 
 #This is the resolution of the image
 W = 700
 
 #These should be set to the smallest and largest possible 
 #x,y coordinates in the cells
-inputsmin = -6
-inputsmax = 8
+inputsmin = -.5
+inputsmax = 4.5
 
+tol = 0.00001
 rand.seed(2)
 
 #Rescale coordinates to correct scale for the diagram
@@ -47,7 +46,23 @@ def read_line(file):
     print("Warning: End of File Reached")
     return
                              
-def print_cell_diagram():
+def read_rectangle(file):
+    x0, x1, y0, y1 = read_line(file).split(" ")
+    x0 = image_coordinates(float(x0))
+    x1 = image_coordinates(float(x1))
+    y0 = W - image_coordinates(float(y0))
+    y1 = W - image_coordinates(float(y1)) 
+    return x0, x1, y0, y1
+
+def show_image(window, image):
+    cv.imshow(window, image)
+    cv.moveWindow(window, W, 200)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+#for mode, all seperate means that the program will display each cell one at a time
+#combined means that the program will display all cells at once
+def print_cell_diagram(mode):
     
     # Create black empty images
     size = W, W, 3
@@ -58,14 +73,13 @@ def print_cell_diagram():
     N = int(read_line(cellDataFile))
     
     '''
-    used just to visualize support of mu'''
+    used just to visualize support of mu
     x0 = image_coordinates(float(0))
     x1 = image_coordinates(float(4))
     y0 = W - image_coordinates(float(0))
-    y1 = W - image_coordinates(float(4))
-
+    y1 = W - image_coordinates(float(4)) 
     cv.rectangle(cellImage, (x0,y0), (x1,y1), (0,255,255), -1, 8)
-    
+    '''
     
     for j in range(2**N - 1):
         count = int(read_line(cellDataFile))
@@ -73,23 +87,14 @@ def print_cell_diagram():
         color = (rand.randint(0, 255), rand.randint(0, 255), rand.randint(0, 255))
         
         for i in range(count):
-            x0, x1, y0, y1 = read_line(cellDataFile).split(" ")
-            x0 = image_coordinates(float(x0))
-            x1 = image_coordinates(float(x1))
-            y0 = W - image_coordinates(float(y0))
-            y1 = W - image_coordinates(float(y1))
-            
+            x0, x1, y0, y1 = read_rectangle(cellDataFile)
             cv.rectangle(cellImage, (x0,y0), (x1,y1), color, -1, 8)
             
         if(mode == "all seperate"):
-            cv.imshow(cellWindow, cellImage)
-            cv.moveWindow(cellWindow, W, 200)
-            cv.waitKey(0)
-            cv.destroyAllWindows()
+            show_image(cellWindow, cellImage)
     
     if(mode == "combined"):
-        cv.imshow(cellWindow, cellImage)
-        
+        cv.imshow(cellWindow, cellImage)     
         cv.moveWindow(cellWindow, W, 200)
         cv.waitKey(0)
         cv.imwrite("Cell_Diagram.png", cellImage)
@@ -97,10 +102,48 @@ def print_cell_diagram():
     
     cellDataFile.close()
 
+def print_transport_diagram():
+
+    cellDataWithMuFile = open(cellDataWithMuFileLocation, 'r')
+    transportPlanDataFile = open(transportPlanDataFileLocation, 'r')
+    N = int(read_line(cellDataWithMuFile))
+    read_line(transportPlanDataFile) #kills the N in that file
+    read_line(transportPlanDataFile) #kills empty cell in that file
+    size = W, W, 3
+    transportWindow = "Transport Diagram"
+    warehouseImages = [np.full(size, 255, dtype=np.uint8) for i in range(N)]
+    
+    for j in range(2**N - 1):
+        size = float(read_line(cellDataWithMuFile))
+        count = int(read_line(cellDataWithMuFile))
+        
+        transportAmounts = read_line(transportPlanDataFile).split(" ")
+        
+        cell_rectangles = []
+        
+        for i in range(count):
+            cell_rectangles.append((read_rectangle(cellDataWithMuFile)))
+        
+        for k in range(N):
+            if(float(transportAmounts[k]) < tol):
+                shade = 255
+            else:
+                shade = 255 - 255* float(transportAmounts[k]) / size
+        
+            for i in range(count):
+                cv.rectangle(warehouseImages[k], (cell_rectangles[i][0],cell_rectangles[i][2]), (cell_rectangles[i][1],cell_rectangles[i][3]), (shade, shade, shade), -1, 8)
+    
+    for k in range(N):
+        show_image(transportWindow, warehouseImages[k])
+    
+    cellDataWithMuFile.close()
+    transportPlanDataFile.close()
+
+    
 
 #start main program
-
-print_cell_diagram()
+print_transport_diagram()
+#print_cell_diagram("all seperate")
 
 
 

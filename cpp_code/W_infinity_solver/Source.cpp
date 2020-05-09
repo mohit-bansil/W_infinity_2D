@@ -47,10 +47,8 @@ Currently methods are
 3. Find mu area (area of rectangle intersected with mu)
 4. Determine if a point is inside the rectangle
 5. Print the coordinates of the rectangle to cellOutputFile
-6. intersect two rectangles
-*/
-
-
+6. Print the coordinates of the rectangle to cellOutputFileWithMu
+7. Intersect two rectangles*/
 
 struct rectangle
 {
@@ -122,7 +120,8 @@ Currently the methods are:
 2. intersect the cell with the complement of a given rectangle (Outersect).
 3. Compute the mu area of the cell. 
 4. Print the coordinates of each rectangle in the cell to cellOutputFile
-5. Delete all degenerate rectangles from cell.
+5. Print the coordinates of each rectangle in the cell and the mu area to cellOutputFileWithMu
+6. Delete all degenerate rectangles from cell.
 
 WARNING!!! The way Outersect is written, it assumes that the outersecting rectangle 
 is at least as big as each of the rectangles in the cell! 
@@ -411,7 +410,7 @@ void input_data()
 
 /* This function solves the W_infinity transport problem to within an error of desiredError.
 The array cellSizes is written with the resulting transport graph vertex weights
-The resulting cell decomposition and the upper/lower omega bounds are written to the cellOutputFile*/
+The resulting cell decomposition is written to the cellOutputFile and cellOutputFileWithMu*/
 void solve(double lowerOmegaBound, double upperOmegaBound, double desiredError, double cellSizes[])
 {
 	double currentOmegaGuess;
