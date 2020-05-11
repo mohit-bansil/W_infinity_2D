@@ -19,10 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 import cv2 as cv
 import random as rand
+import os
 
 cellDataFileLocation = "Cell_Data.txt"
 cellDataWithMuFileLocation = "Cell_Data_With_Mu.txt"
 transportPlanDataFileLocation = "Optimal_Transport_Plan.txt"
+
+#This is the folder where the images should be stored
 
 #This is the resolution of the image
 W = 700
@@ -59,15 +62,20 @@ def show_image(window, image):
     cv.moveWindow(window, W, 200)
     cv.waitKey(0)
     cv.destroyAllWindows()
+  
 
 #for mode, all seperate means that the program will display each cell one at a time
 #combined means that the program will display all cells at once
-def print_cell_diagram(mode):
+#showImages tells whether or not the images should be displayed on the screen
+def print_cell_diagram(mode, showImages):
+    
+    if mode == "all seperate" and not os.path.exists('Cell_Diagrams'):
+        os.makedirs('Cell_Diagrams')
     
     # Create black empty images
     size = W, W, 3
     cellWindow = "Cell Diagram"
-    cellImage = np.zeros(size, dtype=np.uint8)
+    cellImage = np.full(size, 255, dtype=np.uint8)
     
     cellDataFile = open(cellDataFileLocation, 'r')
     N = int(read_line(cellDataFile))
@@ -91,18 +99,22 @@ def print_cell_diagram(mode):
             cv.rectangle(cellImage, (x0,y0), (x1,y1), color, -1, 8)
             
         if(mode == "all seperate"):
-            show_image(cellWindow, cellImage)
+            if(showImages):
+                show_image(cellWindow, cellImage)
+            cv.imwrite("Cell_Diagrams/" + "Cell_Diagram"+ str(j) +".png", cellImage)
+            cellImage = np.full(size, 255, dtype=np.uint8)
     
     if(mode == "combined"):
-        cv.imshow(cellWindow, cellImage)     
-        cv.moveWindow(cellWindow, W, 200)
-        cv.waitKey(0)
+        if(showImages):
+            show_image(cellWindow, cellImage)     
         cv.imwrite("Cell_Diagram.png", cellImage)
-        cv.destroyAllWindows()
     
     cellDataFile.close()
 
 def print_transport_diagram():
+    
+    if not os.path.exists('Warehouse_Diagrams'):
+        os.makedirs('Warehouse_Diagrams')
 
     cellDataWithMuFile = open(cellDataWithMuFileLocation, 'r')
     transportPlanDataFile = open(transportPlanDataFileLocation, 'r')
@@ -134,7 +146,8 @@ def print_transport_diagram():
                 cv.rectangle(warehouseImages[k], (cell_rectangles[i][0],cell_rectangles[i][2]), (cell_rectangles[i][1],cell_rectangles[i][3]), (shade, shade, shade), -1, 8)
     
     for k in range(N):
-        show_image(transportWindow, warehouseImages[k])
+        show_image(transportWindow, warehouseImages[k])     
+        cv.imwrite("Warehouse_Diagrams/" + "Warehouse_Diagram" + str(k + 1) + ".png", warehouseImages[k])
     
     cellDataWithMuFile.close()
     transportPlanDataFile.close()
@@ -142,8 +155,8 @@ def print_transport_diagram():
     
 
 #start main program
-print_transport_diagram()
-#print_cell_diagram("all seperate")
+#print_transport_diagram()
+print_cell_diagram("all seperate", False)
 
 
 
