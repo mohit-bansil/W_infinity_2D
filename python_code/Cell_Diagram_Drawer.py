@@ -89,7 +89,7 @@ def print_cell_diagram(mode, showImages):
     cv.rectangle(cellImage, (x0,y0), (x1,y1), (0,255,255), -1, 8)
     '''
     
-    for j in range(2**N - 1):
+    for j in range(1, 2**N):
         count = int(read_line(cellDataFile))
         
         color = (rand.randint(0, 255), rand.randint(0, 255), rand.randint(0, 255))
@@ -155,7 +155,7 @@ def print_transport_diagram():
     
 
 #start main program
-#print_transport_diagram()
+print_transport_diagram()
 print_cell_diagram("all seperate", False)
 
 

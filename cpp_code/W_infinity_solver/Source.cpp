@@ -27,6 +27,7 @@ rectangle intersect(rectangle A, rectangle B);
 
 const int maxN = 8;
 const double tolerance = 0.0000001;
+const double infinity = 9999999;
 
 int N;
 double y[maxN][2];
@@ -148,6 +149,7 @@ struct cell
 
 		return;
 	}
+
 	void outersect_with_rectangle(rectangle A)
 	{
 		int warningFlag;
@@ -210,29 +212,40 @@ struct cell
 				continue;
 			}
 
-			if (pieces[i].x1 > A.x0)
+			if(A.y0 < pieces[i].y0 && A.y1 > pieces[i].y1)
 			{
-				pieces[i].x1 = A.x0;
-				warningFlag++;
-			}
-			if (pieces[i].x0 < A.x1)
-			{
-				pieces[i].x0 = A.x1;
-				warningFlag++;
-			}
-			if (pieces[i].y1 > A.y0)
-			{
-				pieces[i].y1 = A.y0;
-				warningFlag++;
-			}
-			if (pieces[i].y0 < A.y1)
-			{
-				pieces[i].y0 = A.y1;
-				warningFlag++;
+				if (pieces[i].x1 > A.x0 && A.x1 > pieces[i].x1)
+				{
+					pieces[i].x1 = A.x0;
+					warningFlag++;
+				}
+				if (pieces[i].x0 < A.x1 && A.x0 < pieces[i].x0)
+				{
+					pieces[i].x0 = A.x1;
+					warningFlag++;
+				}
 			}
 
-//			if (warningFlag > 1)
-//				cerr << "Warning something might be wrong. Multiple sides were cut from a cell piece." << endl;
+			if (A.x0 < pieces[i].x0 && A.x1 > pieces[i].x1)
+			{
+				if (pieces[i].y1 > A.y0 && A.y1 > pieces[i].y1)
+				{
+					pieces[i].y1 = A.y0;
+					warningFlag++;
+				}
+				if (pieces[i].y0 < A.y1 && A.y0 < pieces[i].y0)
+				{
+					pieces[i].y0 = A.y1;
+					warningFlag++;
+				}
+			}
+
+/*
+			if (warningFlag > 1)
+				cerr << "Warning something might be wrong. Multiple sides were cut from a cell piece." << endl;
+			if (warningFlag == 0)
+				cerr << "Warning something might be wrong. No sides were cut from a cell piece." << endl;
+*/
 		}
 
 		count += newPiecesAdded;
@@ -641,7 +654,7 @@ int main()
 	rectangle mu = rectangle(0, 4, 0, 4);
 	pointerMu = &mu;
 
-	solve(0, 100, 0.1, cellSizes);
+	solve(1, 5, 0.1, cellSizes);
 
 	cellOutputFile.close();
 
