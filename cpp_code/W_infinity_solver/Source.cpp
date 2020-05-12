@@ -401,7 +401,7 @@ bool is_there_perfect_matching(double cellsizes[])
 			}
 		}
 
-		if (leftsum < rightsum)
+		if (leftsum < rightsum - tolerance)
 			return false;
 
 	}
@@ -654,7 +654,7 @@ int main()
 	rectangle mu = rectangle(0, 4, 0, 4);
 	pointerMu = &mu;
 
-	solve(1, 5, 0.1, cellSizes);
+	solve(0, 10, 0.00001, cellSizes);
 
 	cellOutputFile.close();
 
