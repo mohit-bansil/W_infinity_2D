@@ -27,7 +27,7 @@ rectangle intersect(rectangle A, rectangle B);
 
 const int maxN = 8;
 const double tolerance = 0.0000001;
-const double infinity = 9999999;
+//const double infinity = 9999999;
 
 int N;
 double y[maxN][2];
@@ -75,9 +75,9 @@ struct rectangle
 	{
 		return intersect(*this, *pointerMu).area() / ((*pointerMu).area());
 	}
-	bool is_inside(double x, double y)
+	bool is_inside(double x, double y_point)
 	{
-		if (x < x0 || x > x1 || y < y0 || y > y1)
+		if (x < x0 || x > x1 || y_point < y0 || y_point > y1)
 			return false;
 		else
 			return true;
@@ -487,7 +487,7 @@ int shortestPath(const double leftVertexWeights[], const double rightVertexWeigh
 		}
 	}
 
-	for (queueCurrentPosition; queueCurrentPosition < queueSize; queueCurrentPosition++)
+	for (; queueCurrentPosition < queueSize; queueCurrentPosition++)
 	{
 		int currentVertexNum = queue[queueCurrentPosition].num;
 
